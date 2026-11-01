@@ -1,0 +1,14 @@
+# Пример для Caddy: HTTPS (Let's Encrypt) выпускается и продлевается автоматически.
+# Замените cloud.example.com на свой домен, в .env поставьте TRUST_PROXY=true и COOKIE_SECURE=true.
+
+cloud.example.com {
+	encode zstd gzip
+	request_body {
+		max_size 20GB
+	}
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy 127.0.0.1:8000 {
+		# заголовок от клиента не доверяем: подставляем реальный адрес
+		header_up X-Forwarded-For {remote_host}
+	}
+}

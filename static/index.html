@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Домашний Диск</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/account.css">
+<link rel="preload" href="/static/fonts/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsI.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Домашний Диск">
+<meta name="theme-color" content="#f6f6fb">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="/static/logo.png" alt="" class="logo-dot">
+      <span>Диск</span>
+    </div>
+    <div class="create-wrap" id="createWrap">
+      <button class="btn-create" id="createBtn"><span class="plus-icon">+</span> Создать</button>
+      <div class="create-menu" id="createMenu">
+        <div class="item" id="newFolderItem"><span class="msi">create_new_folder</span> Новая папка</div>
+        <div class="menu-sep"></div>
+        <div class="item" id="uploadFileItem"><span class="msi">upload_file</span> Загрузить файл</div>
+        <div class="item" id="uploadFolderItem"><span class="msi">drive_folder_upload</span> Загрузить папку</div>
+      </div>
+    </div>
+    <input type="file" id="fileUploadInput" multiple style="display:none;">
+    <input type="file" id="folderUploadInput" webkitdirectory multiple style="display:none;">
+    <div class="storage-box">
+      <div class="storage-bar"><div class="storage-fill" id="storageFill"></div></div>
+      <div class="storage-text" id="storageText">Загрузка...</div>
+    </div>
+    <nav class="side-nav">
+      <div class="nav-item active" data-view="common" id="commonNavItem"><span class="msi">folder</span> Общая папка</div>
+      <div class="nav-item" data-view="personal" id="personalNavItem"><span class="msi">person</span> Мои файлы</div>
+      <div class="nav-item" data-view="shared" id="sharedNavItem"><span class="msi">folder_shared</span> Доступно мне</div>
+    </nav>
+    <div class="side-nav-sep"></div>
+    <div class="side-nav-label">Быстрый доступ</div>
+    <nav class="side-nav" id="shortcutsNav"></nav>
+  </aside>
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-btn" id="menuToggleBtn"><span class="msi">menu</span></button>
+      <div class="search-box">
+        <span class="search-icon msi">search</span>
+        <div id="searchInput" class="search-input-editable" contenteditable="true" data-placeholder="Поиск на Диске" spellcheck="false"></div>
+      </div>
+      <div class="user-avatar" id="avatarBtn">
+        <span id="avatarLetter">?</span>
+        <div class="user-menu" id="userMenu">
+          <div class="item" id="userNameLabel"></div>
+          <div class="item" id="settingsMenuItem">Настройки и безопасность</div>
+          <div class="item" id="usersMenuItem" style="display:none;">Пользователи</div>
+          <div class="item" id="logoutBtn">Выйти</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="filesView">
+      <div class="breadcrumbs" id="breadcrumbs"></div>
+
+      <div class="toolbar-row selection-toolbar" id="selectionToolbar" style="display:none;">
+        <button class="icon-btn" id="clearSelectionBtn" title="Отменить"><span class="msi">close</span></button>
+        <span class="selection-count" id="selectionCount">выбрано 0 объектов</span>
+        <div class="selection-actions">
+          <button class="icon-btn" id="bulkShareBtn" title="Поделиться"><span class="msi">person_add</span></button>
+          <button class="icon-btn" id="bulkDownloadBtn" title="Скачать"><span class="msi">download</span></button>
+          <button class="icon-btn" id="bulkMoveBtn" title="Переместить"><span class="msi">drive_file_move</span></button>
+          <button class="icon-btn" id="bulkDeleteBtn" title="Удалить"><span class="msi">delete</span></button>
+        </div>
+      </div>
+
+      <div class="section-header" id="normalToolbarRow">
+        <span></span>
+        <div class="header-actions">
+          <div class="sort-wrap" id="sortWrap">
+            <button class="filter-chip" id="sortToggleBtn"><span class="msi" style="font-size:16px;">sort</span> <span class="sort-btn-label">Сортировка</span></button>
+            <div class="sort-menu" id="sortMenu">
+              <div class="sort-menu-label">Сортировать по</div>
+              <div class="sort-menu-item" data-sort-key="name"><span class="msi check-icon">check</span>Название</div>
+              <div class="sort-menu-item" data-sort-key="size"><span class="msi check-icon">check</span>Размер</div>
+              <div class="sort-menu-item" data-sort-key="date"><span class="msi check-icon">check</span>Дата изменения</div>
+              <div class="menu-sep"></div>
+              <div class="sort-menu-label">Порядок сортировки</div>
+              <div class="sort-menu-item" data-sort-dir="1"><span class="msi check-icon">check</span>Сначала старые / А-Я</div>
+              <div class="sort-menu-item" data-sort-dir="-1"><span class="msi check-icon">check</span>Сначала новые / Я-А</div>
+              <div class="menu-sep"></div>
+              <div class="sort-menu-label">Папки</div>
+              <div class="sort-menu-item" data-folders-pos="top"><span class="msi check-icon">check</span>Сверху</div>
+              <div class="sort-menu-item" data-folders-pos="mixed"><span class="msi check-icon">check</span>Вместе с файлами</div>
+            </div>
+          </div>
+          <button class="toggle-btn" id="newFolderHereBtn" title="Новая папка здесь"><span class="msi">create_new_folder</span></button>
+          <div class="view-toggle">
+            <button class="toggle-btn active" id="listViewBtn" title="Список"><span class="msi">view_list</span></button>
+            <button class="toggle-btn" id="gridViewBtn" title="Сетка"><span class="msi">grid_view</span></button>
+          </div>
+        </div>
+      </div>
+
+      <table class="file-table" id="fileTable">
+        <thead>
+          <tr>
+            <th class="select-col"><input type="checkbox" id="selectAllCheckbox"></th>
+            <th class="sortable-col" data-col-key="name">Название <span class="msi col-sort-icon" data-icon-for="name"></span></th>
+            <th>Владелец</th>
+            <th class="sortable-col" data-col-key="size">Размер <span class="msi col-sort-icon" data-icon-for="size"></span></th>
+            <th class="sortable-col" data-col-key="date">Изменено <span class="msi col-sort-icon" data-icon-for="date"></span></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="fileTableBody"></tbody>
+      </table>
+
+      <div class="file-grid" id="fileGrid" style="display:none;"></div>
+    </div>
+
+    <div id="sharedView" style="display:none;">
+      <h2 class="section-title-lg">Доступно мне</h2>
+      <table class="file-table" id="sharedTable">
+        <thead>
+          <tr>
+            <th>Название</th>
+            <th>Владелец</th>
+            <th>Размер</th>
+            <th>Изменено</th>
+            <th>Доступ</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="sharedTableBody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="convertModalOverlay">
+  <div class="modal-box">
+    <h3 class="modal-title">Конвертировать</h3>
+    <p class="modal-message" id="convertFileName"></p>
+    <select id="convertFormatSelect" class="modal-input"></select>
+    <p class="modal-message" id="convertProgressMsg" style="display:none;">Конвертация идёт, это может занять время...</p>
+    <div class="modal-actions">
+      <button class="modal-btn" id="convertCancelBtn">Отмена</button>
+      <button class="modal-btn primary" id="convertSubmitBtn">Конвертировать</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="folderModalOverlay">
+  <div class="modal-box">
+    <h3 class="modal-title">Новая папка</h3>
+    <input type="text" id="folderNameInput" class="modal-input" value="Без названия">
+    <div class="modal-actions">
+      <button class="modal-btn" id="folderCancelBtn">Отмена</button>
+      <button class="modal-btn primary" id="folderCreateBtn">Создать</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="deleteModalOverlay">
+  <div class="modal-box">
+    <h3 class="modal-title" id="deleteModalTitle">Удалить?</h3>
+    <p class="modal-message" id="deleteModalMessage"></p>
+    <div class="modal-actions">
+      <button class="modal-btn" id="deleteCancelBtn">Отмена</button>
+      <button class="modal-btn danger" id="deleteConfirmBtn">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="shareModalOverlay">
+  <div class="modal-box">
+    <h3 class="modal-title">Открыть доступ</h3>
+    <p class="modal-message" id="shareFileName"></p>
+    <div class="share-list" id="shareList"></div>
+    <div class="share-add-row">
+      <input type="text" id="shareUsernameInput" class="modal-input" placeholder="Логин пользователя" style="margin-bottom:0;">
+      <button class="modal-btn primary" id="shareAddUserBtn">Добавить</button>
+    </div>
+    <button class="modal-btn primary" id="sharePublicBtn" style="margin-top:8px;"><span class="msi" style="font-size:16px;">public</span> Открыть для всех</button>
+    <div class="modal-actions">
+      <button class="modal-btn" id="shareCloseBtn">Готово</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="renameModalOverlay">
+  <div class="modal-box">
+    <h3 class="modal-title">Переименовать</h3>
+    <input type="text" id="renameNameInput" class="modal-input">
+    <div class="modal-actions">
+      <button class="modal-btn" id="renameCancelBtn">Отмена</button>
+      <button class="modal-btn primary" id="renameSubmitBtn">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="moveModalOverlay">
+  <div class="modal-box move-modal-box">
+    <h3 class="modal-title" id="moveModalTitle">Перемещение</h3>
+    <div class="move-current-loc">
+      <span class="move-loc-label">Текущее местоположение:</span>
+      <span class="move-loc-chip" id="moveCurrentChip"></span>
+    </div>
+    <div class="move-tabs">
+      <div class="move-tab" data-tab="recommended">Рекомендуемые</div>
+      <div class="move-tab active" data-tab="all">Все местоположения</div>
+    </div>
+    <div class="move-picker-breadcrumbs" id="movePickerBreadcrumbs"></div>
+    <div class="move-picker-list" id="movePickerList"></div>
+    <div class="modal-actions">
+      <button class="modal-btn" id="moveCancelBtn">Отмена</button>
+      <button class="modal-btn primary" id="moveSubmitBtn">Переместить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="infoModalOverlay">
+  <div class="modal-box">
+    <h3 class="modal-title">Информация о файле</h3>
+    <div class="info-rows" id="infoRows"></div>
+    <div class="modal-actions">
+      <button class="modal-btn" id="infoCloseBtn">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<div class="context-menu" id="contextMenu">
+  <div class="item" data-action="download"><span class="msi">download</span> Скачать</div>
+  <div class="item" data-action="rename"><span class="msi">edit</span> Переименовать</div>
+  <div class="item" data-action="copy"><span class="msi">content_copy</span> Создать копию</div>
+  <div class="item" data-action="share" id="ctxShareItem"><span class="msi">person_add</span> Поделиться</div>
+  <div class="item" data-action="archive" id="ctxArchiveItem"><span class="msi">folder_zip</span> Архивировать</div>
+  <div class="item" data-action="extract" id="ctxExtractItem"><span class="msi">unarchive</span> Разархивировать</div>
+  <div class="item" data-action="convert" id="ctxConvertItem"><span class="msi">sync_alt</span> Конвертировать</div>
+  <div class="item has-submenu" data-action="organize">
+    <span class="msi">create_new_folder</span> Систематизировать <span class="msi submenu-arrow">chevron_right</span>
+    <div class="submenu">
+      <div class="item" data-action="move"><span class="msi">drive_file_move</span> Переместить в папку</div>
+    </div>
+  </div>
+  <div class="item" data-action="info"><span class="msi">info</span> Информация о файле</div>
+  <div class="menu-sep"></div>
+  <div class="item danger" data-action="trash"><span class="msi">delete</span> Отправить в корзину</div>
+</div>
+
+<div class="drop-overlay" id="dropOverlay">
+  <div class="drop-overlay-text"><span class="msi">upload_file</span> Перенести файл</div>
+</div>
+
+<script src="/static/vendor/qrcode/qrcode.min.js"></script>
+<script src="/static/app.js"></script>
+<script src="/static/account.js"></script>
+</body>
+</html>

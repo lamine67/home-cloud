@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Вход — Домашний Диск</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="preload" href="/static/fonts/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsI.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Домашний Диск">
+<meta name="theme-color" content="#f6f6fb">
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <img src="/static/logo.png" alt="" class="login-logo" id="loginLogoImg">
+    <h1 id="loginTitle">Домашний Диск</h1>
+    <div class="subtitle" id="loginSubtitle">Войдите в аккаунт</div>
+
+    <form id="loginForm">
+      <div class="login-field">
+        <input type="text" id="username" placeholder=" " autocomplete="username" autocapitalize="none" required>
+        <label for="username" class="login-floating-label">Логин</label>
+      </div>
+      <div class="login-field">
+        <input type="password" id="password" placeholder=" " autocomplete="current-password" required>
+        <label for="password" class="login-floating-label">Пароль</label>
+      </div>
+      <div class="error-msg" id="errorMsg"></div>
+      <div class="login-actions">
+        <button type="submit" class="btn-primary">Войти</button>
+      </div>
+    </form>
+
+    <form id="totpForm" style="display:none;">
+      <input type="text" id="totpCode" class="login-totp-input" placeholder="000000" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>
+      <div class="error-msg" id="totpErrorMsg"></div>
+      <div class="login-actions">
+        <button type="submit" class="btn-primary">Подтвердить</button>
+      </div>
+      <a href="#" class="login-back-link" id="totpBackLink">← Назад</a>
+    </form>
+
+    <form id="quickForm" style="display:none;">
+      <input type="text" id="quickCode" class="login-totp-input" placeholder="000000" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>
+      <div class="error-msg" id="quickErrorMsg"></div>
+      <div class="login-actions">
+        <button type="submit" class="btn-primary">Войти</button>
+      </div>
+      <a href="#" class="login-back-link" id="quickOtherAccountLink">Войти под другим аккаунтом</a>
+    </form>
+  </div>
+</div>
+<script>
+// Подпись поля поднимается и при автозаполнении браузера или менеджера паролей.
+function refreshFloatState(el) {
+    el.classList.toggle('has-value', el.value.length > 0);
+}
+document.querySelectorAll('.login-field input').forEach(el => {
+    refreshFloatState(el);
+    el.addEventListener('input', () => refreshFloatState(el));
+    el.addEventListener('change', () => refreshFloatState(el));
+    el.addEventListener('animationstart', (e) => {
+        if (e.animationName === 'login-autofill-start') refreshFloatState(el);
+    });
+    setTimeout(() => refreshFloatState(el), 300);
+    setTimeout(() => refreshFloatState(el), 1000);
+});
+
+let pendingTotpToken = null;
+let quickUsername = null;
+
+const forms = {user: 'loginForm', totp: 'totpForm', quick: 'quickForm'};
+
+function showScreen(screen) {
+    for (const id of Object.values(forms)) document.getElementById(id).style.display = 'none';
+    document.getElementById(forms[screen]).style.display = '';
+    const title = document.getElementById('loginTitle');
+    const subtitle = document.getElementById('loginSubtitle');
+    if (screen === 'totp') {
+        title.textContent = 'Двухфакторная аутентификация';
+        subtitle.textContent = 'Введите код из приложения-аутентификатора';
+        document.getElementById('totpCode').value = '';
+        document.getElementById('totpCode').focus();
+    } else if (screen === 'quick') {
+        title.textContent = quickUsername || 'С возвращением';
+        subtitle.textContent = 'Введите код из приложения-аутентификатора, чтобы продолжить';
+        document.getElementById('quickCode').value = '';
+        document.getElementById('quickCode').focus();
+    } else {
+        title.textContent = 'Домашний Диск';
+        subtitle.textContent = 'Войдите в аккаунт';
+    }
+}
+
+async function post(url, body) {
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body),
+    });
+    let data = {};
+    try { data = await res.json(); } catch (e) { /* пустой ответ */ }
+    return {ok: res.ok, data};
+}
+
+function showError(id, message) {
+    const el = document.getElementById(id);
+    el.textContent = message;
+    el.style.display = 'block';
+}
+
+function finishLogin() {
+    window.location.href = '/';
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    document.getElementById('errorMsg').style.display = 'none';
+    try {
+        const {ok, data} = await post('/api/login', {
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+        });
+        if (!ok) return showError('errorMsg', typeof data.detail === 'string' ? data.detail : 'Ошибка входа');
+        if (data.requires_totp) {
+            pendingTotpToken = data.pending_token;
+            return showScreen('totp');
+        }
+        finishLogin();
+    } catch (err) {
+        showError('errorMsg', 'Ошибка соединения с сервером');
+    }
+});
+
+document.getElementById('totpForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    document.getElementById('totpErrorMsg').style.display = 'none';
+    try {
+        const {ok, data} = await post('/api/login/totp', {
+            pending_token: pendingTotpToken,
+            code: document.getElementById('totpCode').value.trim(),
+        });
+        if (!ok) return showError('totpErrorMsg', typeof data.detail === 'string' ? data.detail : 'Ошибка входа');
+        finishLogin();
+    } catch (err) {
+        showError('totpErrorMsg', 'Ошибка соединения с сервером');
+    }
+});
+
+document.getElementById('totpBackLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    pendingTotpToken = null;
+    document.getElementById('errorMsg').style.display = 'none';
+    showScreen('user');
+});
+
+document.getElementById('quickForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    document.getElementById('quickErrorMsg').style.display = 'none';
+    try {
+        const {ok, data} = await post('/api/login/quick', {code: document.getElementById('quickCode').value.trim()});
+        if (!ok) return showError('quickErrorMsg', typeof data.detail === 'string' ? data.detail : 'Ошибка входа');
+        finishLogin();
+    } catch (err) {
+        showError('quickErrorMsg', 'Ошибка соединения с сервером');
+    }
+});
+
+document.getElementById('quickOtherAccountLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    showScreen('user');
+});
+
+// «Быстрый вход» (включается ALLOW_QUICK_LOGIN=true): на доверенном устройстве хватает кода 2FA.
+fetch('/api/login/quick-check').then(r => r.json()).then(data => {
+    if (data.available) {
+        quickUsername = data.username;
+        showScreen('quick');
+    }
+}).catch(() => {});
+</script>
+</body>
+</html>

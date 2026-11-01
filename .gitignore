@@ -1,0 +1,28 @@
+# окружение и секреты
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# данные приложения
+data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite3
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# редакторы и ОС
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

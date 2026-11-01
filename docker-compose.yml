@@ -1,0 +1,24 @@
+services:
+  homecloud:
+    build:
+      context: .
+      args:
+        WITH_FFMPEG: "false"   # "true" добавит конвертацию аудио/видео (+~100 МБ к образу)
+    image: homecloud:latest
+    container_name: homecloud
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Внутри контейнера пути фиксированы; снаружи данные лежат в томе homecloud-data
+      DATA_DIR: /data
+      STORAGE_DIR: /data/storage
+      PERSONAL_DIR: /data/personal
+    ports:
+      # Только локальный интерфейс: наружу сайт публикует обратный прокси с HTTPS (см. deploy/)
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - homecloud-data:/data
+      # Свой каталог вместо тома (выдайте права: chown -R 1000:1000 /srv/homecloud-data): - /srv/homecloud-data:/data
+
+volumes:
+  homecloud-data:

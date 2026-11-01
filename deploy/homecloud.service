@@ -1,0 +1,32 @@
+# Установка без Docker (Debian/Ubuntu):
+#   sudo useradd --system --home /var/lib/homecloud --create-home homecloud
+#   sudo git clone <репозиторий> /opt/homecloud && cd /opt/homecloud
+#   sudo python3 -m venv .venv && sudo .venv/bin/pip install -r requirements.txt
+#   sudo cp .env.example /etc/homecloud.env && sudo chmod 600 /etc/homecloud.env && sudo nano /etc/homecloud.env
+#       (DATA_DIR=/var/lib/homecloud, SECRET_KEY, ADMIN_USER, ADMIN_PASSWORD, TRUST_PROXY=true)
+#   sudo cp deploy/homecloud.service /etc/systemd/system/ && sudo systemctl enable --now homecloud
+
+[Unit]
+Description=Homecloud (Домашний Диск)
+After=network.target
+
+[Service]
+Type=simple
+User=homecloud
+Group=homecloud
+WorkingDirectory=/opt/homecloud
+EnvironmentFile=/etc/homecloud.env
+ExecStart=/opt/homecloud/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=3
+
+# Ограничения процесса
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/homecloud
+# Если STORAGE_DIR / PERSONAL_DIR лежат в другом месте, добавьте их в ReadWritePaths.
+
+[Install]
+WantedBy=multi-user.target
